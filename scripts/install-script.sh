@@ -9,11 +9,13 @@ cd /mnt/server
 
 # [SETUP] Create necessary folders
 echo -e "[SETUP] Create folders"
-mkdir -p logs tmp www node
+mkdir -p logs tmp www goapp
 
 # Clone the default repository into a temporary directory
-echo "[Git] Cloning default repository 'https://github.com/earnestangel/pterodactyl-nginx-node-egg' into temporary directory."
-git clone https://github.com/earnestangel/pterodactyl-nginx-node-egg /mnt/server/gtemp > /dev/null 2>&1 && echo "[Git] Repository cloned successfully." || { echo "[Git] Error: Default repository clone failed."; exit 21; }
+echo "[Git] Cloning default repository 'https://github.com/earnestangel/pterodactyl-nginx-go-egg' into temporary directory."
+git clone https://github.com/earnestangel/pterodactyl-nginx-go-egg /mnt/server/gtemp > /dev/null 2>&1 \
+    && echo "[Git] Repository cloned successfully." \
+    || { echo "[Git] Error: Default repository clone failed."; exit 21; }
 
 # Copy only nginx related folders and files from the temporary repository
 echo "[Git] Copying folder and files from default repository."
@@ -21,6 +23,7 @@ cp -r /mnt/server/gtemp/nginx /mnt/server || { echo "[Git] Error: Copying 'nginx
 cp -r /mnt/server/gtemp/modules /mnt/server || { echo "[Git] Error: Copying 'modules' folder failed."; exit 22; }
 cp /mnt/server/gtemp/start-modules.sh /mnt/server || { echo "[Git] Error: Copying 'start-modules.sh' file failed."; exit 22; }
 cp /mnt/server/gtemp/LICENSE /mnt/server || { echo "[Git] Error: Copying 'LICENSE' file failed."; exit 22; }
+
 chmod +x /mnt/server/start-modules.sh
 find /mnt/server/modules -type f -name "*.sh" -exec chmod +x {} \;
 
@@ -41,63 +44,65 @@ else
     # If username and access token are provided, use authenticated access
     if [ -n "${USERNAME}" ] && [ -n "${ACCESS_TOKEN}" ]; then
         echo "[Git] Using authenticated Git access."
-        
-        # Extract the domain and the rest of the URL, ensuring the correct format
+
+        # Extract the domain and the rest of the URL
         GIT_DOMAIN=$(echo "${GIT_ADDRESS}" | cut -d/ -f3)
-        GIT_REPO=$(echo "${GIT_ADDRESS}" | cut -d/ -f4-) # Rest of the URL after the domain
-        
-        # Construct the authenticated Git URL
+        GIT_REPO=$(echo "${GIT_ADDRESS}" | cut -d/ -f4-)
+
+        # Construct authenticated Git URL
         GIT_ADDRESS="https://${USERNAME}:${ACCESS_TOKEN}@${GIT_DOMAIN}/${GIT_REPO}"
-        
+
         echo "[Git] Updated GIT_ADDRESS for authenticated access: ${GIT_ADDRESS}"
     else
         echo "[Git] Using anonymous Git access."
     fi
 
-    # Check if the 'node' directory exists, if not create it
-    if [ ! -d /mnt/server/node ]; then
-        echo "[Git] Creating /mnt/server/node directory."
-        mkdir -p /mnt/server/node
-        else
-        rm -R /mnt/server/node && mkdir -p /mnt/server/node
+    # Check if the 'goapp' directory exists, if not create it
+    if [ ! -d /mnt/server/goapp ]; then
+        echo "[Git] Creating /mnt/server/goapp directory."
+        mkdir -p /mnt/server/goapp
+    else
+        rm -rf /mnt/server/goapp && mkdir -p /mnt/server/goapp
     fi
 
-    cd /mnt/server/node || { echo "[Git] Error: Could not access /mnt/server/node directory."; exit 1; }
+    cd /mnt/server/goapp || { echo "[Git] Error: Could not access /mnt/server/goapp directory."; exit 1; }
 
-    if [ "$(ls -A /mnt/server/node)" ]; then
-        echo "[Git] /mnt/server/node directory is not empty."
-        
-        # Check if .git directory exists in 'node'
+    if [ "$(ls -A /mnt/server/goapp)" ]; then
+        echo "[Git] /mnt/server/goapp directory is not empty."
+
+        # Check if .git directory exists
         if [ -d .git ]; then
-            echo "[Git] .git directory exists in 'node'."
+            echo "[Git] .git directory exists in 'goapp'."
 
-            # Check if .git/config exists in 'node'
+            # Check if .git/config exists
             if [ -f .git/config ]; then
-                echo "[Git] Loading repository info from git config in 'node'."
+                echo "[Git] Loading repository info from git config in 'goapp'."
                 ORIGIN=$(git config --get remote.origin.url)
             else
-                echo "[Git] Error: .git/config not found in 'node'. The directory may contain files, but it's not a valid Git repository."
+                echo "[Git] Error: .git/config not found in 'goapp'. Not a valid Git repository."
                 exit 10
             fi
         else
-            echo "[Git] Error: Directory contains files but no Git repository found in 'node'."
+            echo "[Git] Error: Directory contains files but no Git repository found in 'goapp'."
             exit 11
         fi
 
         # Check if origin matches the provided GIT_ADDRESS
         if [ "${ORIGIN}" == "${GIT_ADDRESS}" ]; then
-            echo "[Git] Repository origin matches. Pulling latest changes from ${GIT_ADDRESS} in 'node'."
-            git pull || { echo "[Git] Error: git pull failed for 'node'."; exit 12; }
+            echo "[Git] Repository origin matches. Pulling latest changes from ${GIT_ADDRESS} in 'goapp'."
+            git pull || { echo "[Git] Error: git pull failed for 'goapp'."; exit 12; }
         else
-            echo "[Git] Error: Repository origin does not match the provided GIT_ADDRESS in 'node'."
+            echo "[Git] Error: Repository origin does not match the provided GIT_ADDRESS in 'goapp'."
             exit 13
         fi
     else
-        # The directory is empty, clone the repository
-        echo "[Git] /mnt/server/node directory is empty. Cloning ${GIT_ADDRESS} into /mnt/server/node."
-        git clone ${GIT_ADDRESS} . > /dev/null 2>&1 && echo "[Git] Repository cloned successfully." || { echo "[Git] Error: git clone failed for 'node'."; exit 14; }
+        # Directory is empty, clone the repository
+        echo "[Git] /mnt/server/goapp directory is empty. Cloning ${GIT_ADDRESS} into /mnt/server/goapp."
+        git clone ${GIT_ADDRESS} . > /dev/null 2>&1 \
+            && echo "[Git] Repository cloned successfully." \
+            || { echo "[Git] Error: git clone failed for 'goapp'."; exit 14; }
     fi
 fi
 
 echo -e "[DONE] Everything has been installed successfully"
-echo -e "[INFO] You can now start the nginx web server"
+echo -e "[INFO] You can now start the nginx + Go server"

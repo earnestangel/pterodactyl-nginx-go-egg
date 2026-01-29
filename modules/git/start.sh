@@ -16,7 +16,7 @@ header() {
 
 # Configuration
 GIT_STATUS="${GIT_STATUS:-false}"
-GIT_DIR="${GIT_DIR:-/home/container/node}"
+GIT_DIR="${GIT_DIR:-/home/container/goapp}"
 
 # If disabled, skip immediately
 if ! [[ "$GIT_STATUS" =~ ^(true|1)$ ]]; then
