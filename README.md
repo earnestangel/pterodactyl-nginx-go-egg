@@ -5,6 +5,12 @@ some functionality may be missing, and is not expected to be run in production e
 
 Originally forked from [Ym0T/pterodactyl-nginx-egg](https://github.com/Ym0T/pterodactyl-nginx-egg)
 
+# Running Go App with this Egg
+Put your Go Lang binary in the `/home/container/goapp` directory, and change the Startup command on the `Go Run Command` field to:
+```
+go run yourapp.go
+```
+
 ## Nginx Reverse Proxy to Go Lang
 Example Nginx configuration to reverse proxy to a Go Lang application running on the same server.
 
